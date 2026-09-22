@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptScale — Cybersecurity Password Auditor &amp; Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="app-wrapper">
+        <main class="card">
+            <header class="app-header">
+                <div class="brand-group">
+                    <div class="logo-box">
+                        <span class="logo-icon">🛡️</span>
+                    </div>
+                    <div>
+                        <div class="title-row">
+                            <h1 class="app-title">CRYPTSCALE</h1>
+
+                        </div>
+                        <p class="app-subtitle">Real-Time Password Complexity Auditor &amp; CSPRNG Defense Engine</p>
+                    </div>
+                </div>
+
+                <nav class="nav-tabs" role="tablist">
+                    <button type="button" class="tab-btn active" id="tabAuditor" role="tab" aria-selected="true">
+                        <span>🔍</span> Auditor &amp; Analyzer
+                    </button>
+                    <button type="button" class="tab-btn" id="tabGenerator" role="tab" aria-selected="false">
+                        <span>🎲</span> CSPRNG Generator
+                    </button>
+                </nav>
+            </header>
+
+            <section class="tab-panel active" id="panelAuditor">
+                <div class="input-container">
+                    <div class="input-label">
+                        <span>Enter Password</span>
+                        <span class="counter-badge" id="charCount">0 chars</span>
+                    </div>
+                    <div class="input-box">
+                        <input type="password" id="passwordInput" class="styled-input"
+                            placeholder="Type or paste a password..." spellcheck="false" autocomplete="off" autofocus>
+                        <div class="input-controls">
+                            <button type="button" class="icon-action-btn" id="btnToggleVis"
+                                title="Show / Hide Password">👁️</button>
+                            <button type="button" class="icon-action-btn" id="btnCopyAudit"
+                                title="Copy to Clipboard">📋</button>
+                            <button type="button" class="icon-action-btn" id="btnClearInput"
+                                title="Clear Field">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card" id="mainCard">
+                    <div class="metric-top">
+                        <div>
+                            <div class="rating-title" id="ratingLabel">CRITICAL</div>
+                            <div class="rating-desc" id="ratingSubtitle">Enter a password to initiate vulnerability scan
+                            </div>
+                        </div>
+                        <div class="score-circle-container">
+                            <svg class="score-ring" viewBox="0 0 36 36">
+                                <path class="score-ring-bg"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="score-ring-val" id="scoreRingVal" stroke-dasharray="0, 100"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <span class="score-text" id="scoreNumber">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="strength-meter-bar">
+                        <div class="meter-segment" id="seg0"></div>
+                        <div class="meter-segment" id="seg1"></div>
+                        <div class="meter-segment" id="seg2"></div>
+                        <div class="meter-segment" id="seg3"></div>
+                        <div class="meter-segment" id="seg4"></div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-pill">
+                            <span class="stat-icon">⚡</span>
+                            <div class="stat-content">
+                                <span class="stat-label">Entropy</span>
+                                <span class="stat-val" id="entropyVal">0.0 bits</span>
+                            </div>
+                        </div>
+                        <div class="stat-pill">
+                            <span class="stat-icon">🖥️</span>
+                            <div class="stat-content">
+                                <span class="stat-label">GPU Cluster</span>
+                                <span class="stat-val" id="crackVal">Instantly</span>
+                            </div>
+                        </div>
+                        <div class="stat-pill">
+                            <span class="stat-icon">🌐</span>
+                            <div class="stat-content">
+                                <span class="stat-label">Web Attack</span>
+                                <span class="stat-val" id="onlineCrackVal">Instantly</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="composition-wrapper">
+                        <div class="composition-bar">
+                            <div class="comp-segment lower" id="compLower"></div>
+                            <div class="comp-segment upper" id="compUpper"></div>
+                            <div class="comp-segment digits" id="compDigits"></div>
+                            <div class="comp-segment symbols" id="compSymbols"></div>
+                        </div>
+                        <div class="comp-legend">
+                            <div class="legend-item"><span class="dot lower"></span> Lower: <strong
+                                    id="cntLower">0</strong></div>
+                            <div class="legend-item"><span class="dot upper"></span> Upper: <strong
+                                    id="cntUpper">0</strong></div>
+                            <div class="legend-item"><span class="dot digits"></span> Digits: <strong
+                                    id="cntDigits">0</strong></div>
+                            <div class="legend-item"><span class="dot symbols"></span> Symbols: <strong
+                                    id="cntSymbols">0</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-dual">
+                    <div class="section-box">
+                        <div class="section-heading">
+                            <span>Criteria Checklist</span>
+                            <span class="section-subtag" id="criteriaPassedCount">0 / 6 Passed</span>
+                        </div>
+                        <ul class="criteria-list">
+                            <li class="crit-row" id="c_len8">
+                                <span class="crit-bullet">⚪</span>
+                                <span>Min 8+ Chars</span>
+                            </li>
+                            <li class="crit-row" id="c_len12">
+                                <span class="crit-bullet">⚪</span>
+                                <span>Optimal 12+ Chars</span>
+                            </li>
+                            <li class="crit-row" id="c_lower">
+                                <span class="crit-bullet">⚪</span>
+                                <span>Lowercase (a–z)</span>
+                            </li>
+                            <li class="crit-row" id="c_upper">
+                                <span class="crit-bullet">⚪</span>
+                                <span>Uppercase (A–Z)</span>
+                            </li>
+                            <li class="crit-row" id="c_digit">
+                                <span class="crit-bullet">⚪</span>
+                                <span>Numbers (0–9)</span>
+                            </li>
+                            <li class="crit-row" id="c_special">
+                                <span class="crit-bullet">⚪</span>
+                                <span>Symbols (!@#$)</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="section-box breach-box">
+                        <div class="section-heading">
+                            <span>Breach Scanner</span>
+                            <span class="k-tag">k-Anonymity</span>
+                        </div>
+                        <p class="section-desc">Verify if this password is known to compromised credential lists.</p>
+                        <button type="button" class="btn-primary-action" id="btnScanHibp">
+                            <span>🛡️</span> Check HIBP Database
+                        </button>
+                        <div class="hibp-output" id="hibpStatus"></div>
+                        <p class="privacy-note">Zero-Knowledge: Only the first 5 chars of the SHA-1 hash are queried.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feedback-card">
+                    <div class="feedback-title">Security Recommendations</div>
+                    <ul class="feedback-items" id="feedbackList">
+                        <li class="feedback-item">Type or generate a password above to begin deep analysis.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="tab-panel" id="panelGenerator">
+                <div class="gen-output-card">
+                    <div class="gen-field-top">
+                        <span class="gen-label">Generated Password</span>
+                        <span class="gen-tier-badge" id="genTierBadge">STRONG</span>
+                    </div>
+                    <div class="gen-display-wrapper">
+                        <input type="text" id="genPasswordOutput" class="gen-display-text" readonly
+                            value="Click Generate...">
+                        <div class="gen-quick-actions">
+                            <button type="button" class="btn-icon-round" id="btnReroll"
+                                title="Generate New Password">🎲</button>
+                            <button type="button" class="btn-icon-round" id="btnCopyGen"
+                                title="Copy to Clipboard">📋</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gen-controls-card">
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-title">Password Length</span>
+                            <span class="slider-val-badge" id="lengthDisplay">16</span>
+                        </div>
+                        <input type="range" id="lengthSlider" min="8" max="20" value="16" step="1"
+                            class="styled-slider">
+                        <div class="preset-buttons">
+                            <button type="button" class="btn-preset" data-length="8">8 (Min)</button>
+                            <button type="button" class="btn-preset" data-length="12">12 (Standard)</button>
+                            <button type="button" class="btn-preset active" data-length="16">16 (Strong)</button>
+                            <button type="button" class="btn-preset" data-length="20">20 (Maximum)</button>
+                        </div>
+                    </div>
+
+                    <div class="options-grid">
+                        <label class="toggle-option">
+                            <input type="checkbox" id="optUpper" checked>
+                            <span class="toggle-box"></span>
+                            <span class="toggle-label">Uppercase (A–Z)</span>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="checkbox" id="optLower" checked>
+                            <span class="toggle-box"></span>
+                            <span class="toggle-label">Lowercase (a–z)</span>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="checkbox" id="optDigits" checked>
+                            <span class="toggle-box"></span>
+                            <span class="toggle-label">Numbers (0–9)</span>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="checkbox" id="optSymbols" checked>
+                            <span class="toggle-box"></span>
+                            <span class="toggle-label">Symbols (!@#$)</span>
+                        </label>
+                        <label class="toggle-option full-width">
+                            <input type="checkbox" id="optAmbiguous">
+                            <span class="toggle-box"></span>
+                            <span class="toggle-label">Exclude Ambiguous (l, 1, I, O, 0, |)</span>
+                        </label>
+                    </div>
+
+                    <div class="gen-action-row">
+                        <button type="button" class="btn-generate-big" id="btnGenerateNow">
+                            <span>✨</span> Generate Strong Password
+                        </button>
+                        <button type="button" class="btn-audit-gen" id="btnAuditGen">
+                            <span>🔍</span> Audit in Detector
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard!</div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>
