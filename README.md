@@ -41,7 +41,7 @@
 
 ```
   ┌─────────────────────────┐      ┌─────────────────────────┐      ┌─────────────────────────┐
-  │  ⌨️  Browser Input      │ ──❯  │ 🧠 assess_password()    │ ──❯ │ 🖥️  Flask Dashboard     │
+  │  ⌨️  Browser Input      │ ──❯  │ 🧠 assess_password()    │ ──❯  │ 🖥️  Flask Dashboard     │
   │   (REST POST /api/check)│      │  Entropy · Score · HIBP │      │     (127.0.0.1:5001)    │
   └─────────────────────────┘      └─────────────────────────┘      └─────────────────────────┘
 ```
@@ -230,7 +230,10 @@ flowchart TD
 ```text
 CryptScale/
 ├── templates/
-│   └── index.html         ← Semantic HTML5 dashboard (glassmorphic layout)
+│   ├── index.html         ← Semantic HTML5 dashboard (glassmorphic layout)
+│   ├── admin_login.html   ← Secure admin authentication portal
+│   ├── admin_dashboard.html ← Security control & telemetry dashboard
+│   └── 429.html           ← Rate limiting defense fallback
 ├── static/
 │   ├── css/
 │   │   └── style.css      ← Cyberpunk ambient glow & SVG ring gauge styles
@@ -238,7 +241,10 @@ CryptScale/
 │       └── app.js         ← Reactive UI controller & REST client
 ├── ss/                    ← UI screenshots
 ├── CryptScale.py          ← Core Flask API, scoring engine, CLI, HIBP client
-├── requirements.txt       ← Flask >= 2.2.0, requests >= 2.28.0
+├── test_security.py       ← Automated security verification suite
+├── .env.example           ← Environment configuration template
+├── .gitignore             ← Security ignores (prevent secret leaks)
+├── requirements.txt       ← Flask, requests, flask-limiter, flask-cors, etc.
 └── README.md              ← This document
 ```
 
@@ -348,6 +354,27 @@ Checks the password against 800M+ compromised entries without transmitting plain
 ```
 </details>
 
+<details open>
+<summary><b>🔒 <code>GET /admin/dashboard</code> &amp; <code>GET /admin/api/status</code> — Admin Security Portal</b></summary>
+
+Protected by RBAC authorization, session authentication, and PBKDF2-SHA256 password hashing. Unauthorized requests redirect to `/admin/login` or return 401.
+
+**Response (`GET /admin/api/status`):**
+```json
+{
+  "status": "healthy",
+  "security": {
+    "debug_mode": false,
+    "rate_limiting": true,
+    "security_headers": true,
+    "cors_configured": true,
+    "password_hashing": "pbkdf2:sha256",
+    "csrf_protection": true
+  }
+}
+```
+</details>
+
 ---
 
 <h2 id="08-cli-reference" style="font-family: 'Bookman Old Style', 'URW Bookman', 'Georgia', serif; color: #00f0ff;">💻 08. CLI Reference</h2>
@@ -427,7 +454,7 @@ Distributed under the **[MIT License](LICENSE)**.
 ⭐ **Star this repository if CryptScale helped you secure your credentials!** ⭐
 
 <p style="font-family: 'Bookman Old Style', 'URW Bookman', serif; color: #64748b; margin-top: 8px;">
-  Crafted with 🛡️ by <b>Priyanshu Pundir</b>
+  Crafted with 🛡️ by <b>Cyber Defense Engineering</b>
 </p>
 
 </div>

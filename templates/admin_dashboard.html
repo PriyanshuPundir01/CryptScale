@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Security Dashboard — CryptScale</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="app-wrapper" style="max-width: 800px;">
+        <main class="card">
+            <header class="app-header">
+                <div class="brand-group">
+                    <div class="logo-box" style="border-color: #00e599; box-shadow: 0 0 20px rgba(0, 229, 153, 0.3);">
+                        <span class="logo-icon">🛡️</span>
+                    </div>
+                    <div>
+                        <div class="title-row">
+                            <h1 class="app-title">SECURITY DASHBOARD</h1>
+                        </div>
+                        <p class="app-subtitle">Active Security Controls &amp; System Hardening Telemetry</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <a href="{{ url_for('home') }}" class="btn-preset" style="text-decoration: none; padding: 0.5rem 1rem;">
+                        View App
+                    </a>
+                    <a href="{{ url_for('admin_logout') }}" class="btn-preset" style="text-decoration: none; padding: 0.5rem 1rem; border-color: #ff3b5c; color: #ff3b5c;">
+                        Logout
+                    </a>
+                </div>
+            </header>
+
+            <div class="stats-grid" style="margin-top: 1.5rem;">
+                <div class="stat-pill">
+                    <span class="stat-icon">🛡️</span>
+                    <div class="stat-content">
+                        <span class="stat-label">Security Posture</span>
+                        <span class="stat-val" style="color: #00e599;">HARDENED</span>
+                    </div>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-icon">⚡</span>
+                    <div class="stat-content">
+                        <span class="stat-label">Debug Mode</span>
+                        <span class="stat-val" style="color: {% if debug_mode %}#ff3b5c{% else %}#00e599{% endif %};">
+                            {{ "ENABLED (INSECURE)" if debug_mode else "DISABLED (SECURE)" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-icon">⏱️</span>
+                    <div class="stat-content">
+                        <span class="stat-label">Rate Limiter</span>
+                        <span class="stat-val" style="color: #00f0ff;">ENFORCED</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-box" style="margin-top: 1.5rem;">
+                <div class="section-heading">
+                    <span>Active Defense Matrix</span>
+                    <span class="k-tag" style="background: rgba(0, 229, 153, 0.15); color: #00e599; border-color: #00e599;">All Active</span>
+                </div>
+                <ul class="criteria-list">
+                    <li class="crit-row passed">
+                        <span class="crit-bullet">✅</span>
+                        <span>API Rate Limiting (Flask-Limiter)</span>
+                    </li>
+                    <li class="crit-row passed">
+                        <span class="crit-bullet">✅</span>
+                        <span>Strict CORS Policy (Configured Whitelist)</span>
+                    </li>
+                    <li class="crit-row passed">
+                        <span class="crit-bullet">✅</span>
+                        <span>Content Security Policy (CSP) &amp; X-Frame-Options (DENY)</span>
+                    </li>
+                    <li class="crit-row passed">
+                        <span class="crit-bullet">✅</span>
+                        <span>Input Sanitization &amp; Length Caps (XSS / ReDoS Defense)</span>
+                    </li>
+                    <li class="crit-row passed">
+                        <span class="crit-bullet">✅</span>
+                        <span>Admin Session Authentication &amp; RBAC Authorization</span>
+                    </li>
+                    <li class="crit-row passed">
+                        <span class="crit-bullet">✅</span>
+                        <span>PBKDF2-SHA256 Cryptographic Credential Hashing</span>
+                    </li>
+                    <li class="crit-row passed">
+                        <span class="crit-bullet">✅</span>
+                        <span>Sensitive Environment Secrets Segregation (.env)</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="section-box" style="margin-top: 1.5rem;">
+                <div class="section-heading">
+                    <span>Session Information</span>
+                </div>
+                <p class="section-desc">Authenticated Admin: <strong style="color: #00f0ff;">{{ admin_user }}</strong></p>
+                <p class="section-desc">Cookie Security: <strong>HttpOnly, SameSite=Lax</strong></p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+

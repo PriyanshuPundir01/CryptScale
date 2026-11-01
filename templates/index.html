@@ -33,14 +33,17 @@
                     </div>
                 </div>
 
-                <nav class="nav-tabs" role="tablist">
-                    <button type="button" class="tab-btn active" id="tabAuditor" role="tab" aria-selected="true">
-                        <span>🔍</span> Auditor &amp; Analyzer
-                    </button>
-                    <button type="button" class="tab-btn" id="tabGenerator" role="tab" aria-selected="false">
-                        <span>🎲</span> CSPRNG Generator
-                    </button>
-                </nav>
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                    <nav class="nav-tabs" role="tablist">
+                        <button type="button" class="tab-btn active" id="tabAuditor" role="tab" aria-selected="true">
+                            <span>🔍</span> Auditor &amp; Analyzer
+                        </button>
+                        <button type="button" class="tab-btn" id="tabGenerator" role="tab" aria-selected="false">
+                            <span>🎲</span> CSPRNG Generator
+                        </button>
+                    </nav>
+                    <a href="{{ url_for('admin_login') }}" class="admin-link" title="Admin Portal">🔒 Admin</a>
+                </div>
             </header>
 
             <section class="tab-panel active" id="panelAuditor">

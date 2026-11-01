@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>429 — Rate Limit Exceeded</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="glow-orb orb-1"></div>
+    <div class="app-wrapper">
+        <main class="card" style="text-align: center; padding: 3rem 2rem;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">⏳</div>
+            <h1 style="color: #ffb800; font-family: var(--font-heading); margin-bottom: 0.5rem;">Rate Limit Exceeded</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.05rem;">
+                Too many requests sent from your IP. Please pause for a moment before retrying.
+            </p>
+            <a href="{{ url_for('home') }}" class="btn-primary-action" style="display: inline-block; text-decoration: none; padding: 0.8rem 1.8rem;">
+                Return to CryptScale
+            </a>
+        </main>
+    </div>
+</body>
+</html>
+

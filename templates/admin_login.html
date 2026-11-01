@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Authentication — CryptScale</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="app-wrapper">
+        <main class="card">
+            <header class="app-header">
+                <div class="brand-group">
+                    <div class="logo-box">
+                        <span class="logo-icon">🔐</span>
+                    </div>
+                    <div>
+                        <div class="title-row">
+                            <h1 class="app-title">CRYPTSCALE ADMIN</h1>
+                        </div>
+                        <p class="app-subtitle">Restricted Access Security Management Portal</p>
+                    </div>
+                </div>
+            </header>
+
+            {% if error %}
+            <div class="admin-alert error">
+                <span>⚠️</span> {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('admin_login') }}" class="admin-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                
+                <div class="input-container">
+                    <div class="input-label">
+                        <span>Admin Username</span>
+                    </div>
+                    <div class="input-box">
+                        <input type="text" name="username" class="styled-input" placeholder="Enter administrator username" required autofocus autocomplete="username" maxlength="64">
+                    </div>
+                </div>
+
+                <div class="input-container" style="margin-top: 1.2rem;">
+                    <div class="input-label">
+                        <span>Admin Password</span>
+                    </div>
+                    <div class="input-box">
+                        <input type="password" name="password" class="styled-input" placeholder="Enter administrator password" required autocomplete="current-password" maxlength="256">
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.8rem; display: flex; gap: 1rem; align-items: center;">
+                    <button type="submit" class="btn-primary-action" style="flex: 1; padding: 0.85rem;">
+                        <span>🔓</span> Authenticate
+                    </button>
+                    <a href="{{ url_for('home') }}" class="btn-preset" style="text-decoration: none; padding: 0.85rem 1.4rem; text-align: center;">
+                        Return to App
+                    </a>
+                </div>
+            </form>
+        </main>
+    </div>
+</body>
+</html>
+

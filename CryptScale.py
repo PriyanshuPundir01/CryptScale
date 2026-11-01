@@ -2,22 +2,50 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import hmac
 import math
 import os
 import re
 import secrets
 import string
 import sys
+import time
 from dataclasses import dataclass
+from datetime import timedelta
 from enum import Enum
+from functools import wraps
 from typing import Dict, List, Optional
-from flask import Flask, jsonify, render_template, request
+
+from dotenv import load_dotenv
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request,
+    session,
+    redirect,
+    url_for,
+    abort,
+)
+from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import werkzeug
+if not hasattr(werkzeug, "__version__"):
+    try:
+        import importlib.metadata
+        werkzeug.__version__ = importlib.metadata.version("werkzeug")
+    except Exception:
+        werkzeug.__version__ = "3.0.0"
+from werkzeug.security import generate_password_hash, check_password_hash
 
 try:
     import requests as _req
     _REQUESTS_OK = True
 except ImportError:
     _REQUESTS_OK = False
+
+load_dotenv()
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 templates_dir = os.path.join(base_dir, "templates")
@@ -28,6 +56,46 @@ app = Flask(
     template_folder=templates_dir,
     static_folder=static_dir
 )
+
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+
+debug_mode = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
+app.config["DEBUG"] = debug_mode
+app.config["TESTING"] = False
+app.config["MAX_CONTENT_LENGTH"] = int(os.environ.get("MAX_CONTENT_LENGTH", 1024 * 1024))
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("SESSION_COOKIE_SECURE", "0").lower() in ("1", "true", "yes")
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=int(os.environ.get("SESSION_LIFETIME_MINUTES", "30")))
+
+allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "")
+allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+if not allowed_origins:
+    allowed_origins = ["http://127.0.0.1:5001", "http://localhost:5001"]
+
+CORS(
+    app,
+    resources={r"/api/*": {"origins": allowed_origins}},
+    supports_credentials=False,
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"]
+)
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["300 per minute", "2000 per hour"],
+    storage_uri=os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
+)
+
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+_env_admin_hash = os.environ.get("ADMIN_PASSWORD_HASH")
+if _env_admin_hash:
+    ADMIN_PASSWORD_HASH = _env_admin_hash
+else:
+    _raw_admin_pwd = os.environ.get("ADMIN_PASSWORD", "CryptScale#Admin2026")
+    ADMIN_PASSWORD_HASH = generate_password_hash(_raw_admin_pwd, method="pbkdf2:sha256:600000")
 
 COMMON_PASSWORDS: set[str] = {
     "password", "password1", "password123", "123456", "12345678", "123456789",
@@ -122,6 +190,87 @@ class Assessment:
             "has_pattern":  self.has_pattern,
         }
 
+def sanitize_input(val: any, max_length: int = 1024) -> str:
+    if val is None:
+        return ""
+    if not isinstance(val, str):
+        val = str(val)
+    val = val.replace("\x00", "")
+    if len(val) > max_length:
+        val = val[:max_length]
+    return val
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("is_admin") or session.get("user") != ADMIN_USERNAME:
+            if request.path.startswith("/api/") or request.path.startswith("/admin/api/") or request.is_json:
+                return jsonify({"error": "Unauthorized. Admin privileges required.", "status": 401}), 401
+            return redirect(url_for("admin_login", next=request.path))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def generate_csrf_token() -> str:
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_hex(32)
+    return session["_csrf_token"]
+
+@app.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=generate_csrf_token())
+
+@app.after_request
+def add_security_headers(response):
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "script-src 'self'; "
+        "img-src 'self' data:; "
+        "connect-src 'self' https://api.pwnedpasswords.com; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
+    )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=(), payment=()"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    if not app.debug:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers.pop("Server", None)
+    return response
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    if request.path.startswith("/api/"):
+        return jsonify({
+            "error": "Rate limit exceeded. Please wait before making more requests.",
+            "status": 429
+        }), 429
+    return render_template("429.html"), 429
+
+@app.errorhandler(400)
+def bad_request_handler(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Bad request", "status": 400}), 400
+    return render_template("429.html"), 400
+
+@app.errorhandler(404)
+def not_found_handler(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Resource not found", "status": 404}), 404
+    return redirect(url_for("home"))
+
+@app.errorhandler(500)
+def internal_error_handler(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "An internal error occurred", "status": 500}), 500
+    return redirect(url_for("home"))
+
 def calculate_entropy(password: str) -> float:
     if not password:
         return 0.0
@@ -170,27 +319,15 @@ def apply_realistic_crack_override(
     is_common: bool,
     has_pattern: bool,
 ) -> tuple[str, str]:
-    """Override pure-entropy crack estimates with realistic attack-scenario times.
-
-    Brute-force math dramatically overestimates how long it takes to crack
-    dictionary passwords or keyboard-walk patterns, because real attackers use
-    wordlists, rule-based mutations, and Markov-chain generators — not random
-    guessing.  This function replaces the naive estimate with values that reflect
-    modern offline (GPU hashcat) and online (rate-limited web form) attacks.
-    """
     if is_common:
-        # Top wordlists contain these passwords; cracked in first ~1 000 guesses.
         return "< 1 second (dictionary)", "< 1 second (dictionary)"
 
     if has_pattern:
-        # Keyboard walks / repeats are in every rule-set; reduce by 3 tiers.
-        # Clamp the effective entropy to simulate a ~100 000-candidate search.
-        effective_bits = min(entropy_bits, 17.0)  # log2(100_000) ≈ 16.6
+        effective_bits = min(entropy_bits, 17.0)
         gpu  = estimate_crack_time(effective_bits)
         web  = estimate_online_crack_time(effective_bits)
         return gpu, web
 
-    # No override needed — return normal entropy-based estimates.
     return estimate_crack_time(entropy_bits), estimate_online_crack_time(entropy_bits)
 
 def detect_pattern(password: str) -> bool:
@@ -262,10 +399,15 @@ def check_hibp_database(password: str) -> dict:
     sha1 = hashlib.sha1(password.encode("utf-8")).hexdigest().upper()
     prefix, suffix = sha1[:5], sha1[5:]
 
+    headers = {"User-Agent": "CryptScale-SecurityEngine/2.0"}
+    hibp_key = os.environ.get("HIBP_API_KEY")
+    if hibp_key:
+        headers["hibp-api-key"] = hibp_key
+
     try:
         resp = _req.get(
             f"https://api.pwnedpasswords.com/range/{prefix}",
-            headers={"User-Agent": "CryptScale/2.0"},
+            headers=headers,
             timeout=5,
         )
         if resp.status_code == 200:
@@ -277,7 +419,7 @@ def check_hibp_database(password: str) -> dict:
             return {"breached": False, "count": 0}
         return {"breached": None, "count": 0, "error": f"HTTP {resp.status_code}"}
     except Exception as e:
-        return {"breached": None, "count": 0, "error": str(e)}
+        return {"breached": None, "count": 0, "error": "Breach database service unreachable"}
 
 def assess_password(password: str) -> Assessment:
     if not password:
@@ -389,12 +531,15 @@ def home():
     return render_template("index.html")
 
 @app.route("/api/check", methods=["POST"])
+@limiter.limit("120 per minute")
 def api_check():
     data = request.get_json(silent=True) or {}
-    pwd = data.get("password", "")
+    raw_pwd = data.get("password", "")
+    pwd = sanitize_input(raw_pwd, max_length=1024)
     return jsonify(assess_password(pwd).to_dict())
 
 @app.route("/api/generate", methods=["POST"])
+@limiter.limit("60 per minute")
 def api_generate():
     data = request.get_json(silent=True) or {}
     raw_length = data.get("length", 16)
@@ -429,10 +574,90 @@ def api_generate():
     })
 
 @app.route("/api/hibp", methods=["POST"])
+@limiter.limit("15 per minute")
 def api_hibp():
     data = request.get_json(silent=True) or {}
-    pwd = data.get("password", "")
+    raw_pwd = data.get("password", "")
+    pwd = sanitize_input(raw_pwd, max_length=1024)
     return jsonify(check_hibp_database(pwd))
+
+@app.route("/admin", methods=["GET"])
+def admin_root():
+    if session.get("is_admin") and session.get("user") == ADMIN_USERNAME:
+        return redirect(url_for("admin_dashboard"))
+    return redirect(url_for("admin_login"))
+
+@app.route("/admin/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
+def admin_login():
+    if session.get("is_admin") and session.get("user") == ADMIN_USERNAME:
+        return redirect(url_for("admin_dashboard"))
+
+    error = None
+    if request.method == "POST":
+        submitted_token = request.form.get("csrf_token", "")
+        session_token = session.get("_csrf_token", "")
+        if not submitted_token or not hmac.compare_digest(submitted_token, session_token):
+            return render_template("admin_login.html", error="Invalid security token. Please refresh."), 400
+
+        username = sanitize_input(request.form.get("username", ""), max_length=64).strip()
+        password = sanitize_input(request.form.get("password", ""), max_length=256)
+
+        user_match = hmac.compare_digest(username, ADMIN_USERNAME)
+        pwd_match = check_password_hash(ADMIN_PASSWORD_HASH, password)
+
+        if user_match and pwd_match:
+            session.clear()
+            session.permanent = True
+            session["is_admin"] = True
+            session["user"] = ADMIN_USERNAME
+            session["login_time"] = int(time.time())
+            session["_csrf_token"] = secrets.token_hex(32)
+            next_url = request.args.get("next")
+            if next_url and next_url.startswith("/admin"):
+                return redirect(next_url)
+            return redirect(url_for("admin_dashboard"))
+
+        time.sleep(0.3)
+        error = "Invalid administrator credentials."
+
+    return render_template("admin_login.html", error=error)
+
+@app.route("/admin/logout", methods=["GET", "POST"])
+@admin_required
+def admin_logout():
+    session.clear()
+    return redirect(url_for("admin_login"))
+
+@app.route("/admin/dashboard", methods=["GET"])
+@admin_required
+def admin_dashboard():
+    return render_template(
+        "admin_dashboard.html",
+        admin_user=session.get("user"),
+        debug_mode=app.debug
+    )
+
+@app.route("/admin/api/status", methods=["GET"])
+@admin_required
+def admin_api_status():
+    return jsonify({
+        "status": "healthy",
+        "security": {
+            "debug_mode": app.debug,
+            "rate_limiting": True,
+            "security_headers": True,
+            "cors_configured": True,
+            "allowed_origins": allowed_origins,
+            "session_secure": app.config["SESSION_COOKIE_SECURE"],
+            "password_hashing": "pbkdf2:sha256",
+            "csrf_protection": True
+        },
+        "system": {
+            "version": "2.1.0-hardened",
+            "python_version": sys.version.split()[0]
+        }
+    })
 
 def _cli_main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
@@ -508,4 +733,6 @@ if __name__ == "__main__":
     if any(arg in sys.argv for arg in ("--check", "--generate")):
         _cli_main()
 
-    app.run(host="127.0.0.1", port=5001, debug=False)
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", "5001"))
+    app.run(host=host, port=port, debug=debug_mode)

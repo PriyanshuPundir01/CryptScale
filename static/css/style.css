@@ -1001,3 +1001,40 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+.admin-link {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-dim);
+    transition: var(--transition);
+}
+
+.admin-link:hover {
+    color: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+    background: rgba(0, 240, 255, 0.08);
+}
+
+.admin-form {
+    margin-top: 1.5rem;
+}
+
+.admin-alert {
+    padding: 0.85rem 1.1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    margin-top: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.admin-alert.error {
+    background: rgba(255, 59, 92, 0.12);
+    border: 1px solid var(--tier-critical);
+    color: #ff8095;
+}
+
