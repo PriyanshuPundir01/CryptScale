@@ -41,7 +41,7 @@
 
 ```
   ┌─────────────────────────┐      ┌─────────────────────────┐      ┌─────────────────────────┐
-  │  ⌨️  Browser Input      │ ──❯  │ 🧠 assess_password()    │ ──❯  │ 🖥️  Flask Dashboard     │
+  │  ⌨️  Browser Input      │ ──❯  │ 🧠 assess_password()   │ ──❯  │ 🖥️  Flask Dashboard     │
   │   (REST POST /api/check)│      │  Entropy · Score · HIBP │      │     (127.0.0.1:5001)    │
   └─────────────────────────┘      └─────────────────────────┘      └─────────────────────────┘
 ```
