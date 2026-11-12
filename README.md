@@ -454,7 +454,7 @@ Distributed under the **[MIT License](LICENSE)**.
 ⭐ **Star this repository if CryptScale helped you secure your credentials!** ⭐
 
 <p style="font-family: 'Bookman Old Style', 'URW Bookman', serif; color: #64748b; margin-top: 8px;">
-  Crafted with 🛡️ by <b>Cyber Defense Engineering</b>
+  Crafted with 🛡️ by <b>Priyanshu Pundir</b>
 </p>
 
 </div>
