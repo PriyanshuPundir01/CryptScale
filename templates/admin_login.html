@@ -8,6 +8,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .admin-form { margin-top: 1.5rem; }
+        .admin-alert {
+            padding: 0.85rem 1.1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            margin-top: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .admin-alert.error {
+            background: rgba(255, 59, 92, 0.12);
+            border: 1px solid var(--tier-critical);
+            color: #ff8095;
+        }
+    </style>
 </head>
 <body>
     <div class="glow-orb orb-1"></div>
